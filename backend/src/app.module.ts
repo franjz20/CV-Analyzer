@@ -3,6 +3,10 @@ import { Module } from '@nestjs/common';
 // import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { UsuariosService } from './usuarios/usuarios.service';
+import { UsuariosController } from './usuarios/usuarios.controller';
+import { UsuariosModule } from './usuarios/usuarios.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -24,7 +28,11 @@ import { TypeOrmModule } from '@nestjs/typeorm';
       }),
       inject: [ConfigService],
     }),
+    UsuariosModule,
+    AuthModule,
   ],
+  // providers: [UsuariosService], //supuestamente esto daba error porque UsuariosService ya está registrado en UsuariosModule, se repite
+  // controllers: [UsuariosController], //supuestamente esto daba error porque UsuariosController ya está registrado en UsuariosModule, se repite
   // controllers: [AppController],
   // providers: [AppService],
 })
