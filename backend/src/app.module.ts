@@ -7,6 +7,7 @@ import { UsuariosService } from './usuarios/usuarios.service';
 import { UsuariosController } from './usuarios/usuarios.controller';
 import { UsuariosModule } from './usuarios/usuarios.module';
 import { AuthModule } from './auth/auth.module';
+import { AnalisisModule } from './analisis/analisis.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AuthModule } from './auth/auth.module';
     }),
     UsuariosModule,
     AuthModule,
+    AnalisisModule,
   ],
   // providers: [UsuariosService], //supuestamente esto daba error porque UsuariosService ya está registrado en UsuariosModule, se repite
   // controllers: [UsuariosController], //supuestamente esto daba error porque UsuariosController ya está registrado en UsuariosModule, se repite
