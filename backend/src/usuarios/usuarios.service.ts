@@ -29,4 +29,8 @@ export class UsuariosService {
   async buscar_por_id(id: string): Promise<Usuario | null>{
     return this.usuariosRepository.findOne({ where: { id } });
   }
+
+  async guardarUsuario(usuario: Usuario): Promise<Usuario>{
+    return this.usuariosRepository.save(usuario);
+  }
 }
