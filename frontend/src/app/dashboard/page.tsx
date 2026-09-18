@@ -51,9 +51,12 @@ export default function DashboardPage() {
       <div className="max-w-2xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold">Analizador de CV</h1>
-          <button onClick={cerrarSesion} className="text-sm text-red-600">
-            Cerrar sesión
-          </button>
+          <div className="flex gap-4 items-center">
+            <a href="/pricing" className="text-sm text-blue-600">Actualizar a Pro</a>
+            <button onClick={cerrarSesion} className="text-sm text-red-600">
+              Cerrar sesión
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6">
