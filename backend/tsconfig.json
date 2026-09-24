@@ -20,7 +20,7 @@
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false,
-    "types": ["Multer"] // Agrega "Multer" porque no funcionaba "Express.Multer.File" en el servicio de análisis (analisis.service.ts)
+    "noFallthroughCasesInSwitch": false
+    // "types": ["Multer"] // Agrega "Multer" porque no funcionaba "Express.Multer.File" en el servicio de análisis (analisis.service.ts)
   }
 }
