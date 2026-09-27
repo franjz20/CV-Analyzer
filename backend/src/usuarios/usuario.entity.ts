@@ -12,7 +12,7 @@ export class Usuario {
     @Column()
     password_hash: string;
 
-    @Column({ default: 'gratis '})
+    @Column({ default: 'gratis'})
     plan: string;
 
     @CreateDateColumn()

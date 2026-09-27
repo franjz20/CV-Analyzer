@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
@@ -31,8 +31,9 @@ export class AnalisisService {
 
   async analizarCV(archivo: Express.Multer.File, usuario: Usuario): Promise<Analisis> {
     const LIMITE_GRATIS = 3;
+    const plan = usuario.plan?.trim();
 
-    if (usuario.plan === 'gratis') {
+    if (plan === 'gratis') {
       const cantidad = await this.contarAnalisisDelUsuario(usuario.id);
       if (cantidad >= LIMITE_GRATIS) {
         throw new ForbiddenException(
@@ -42,12 +43,21 @@ export class AnalisisService {
     }
 
     // 1. Extraer texto del PDF
-    const parser = new PDFParse({data: archivo.buffer});
-    const pdfData = await parser.getText(); // Extraer el texto del PDF
-    const textoPDF = pdfData.text;
+    let textoPDF: string;
+    try {
+      const parser = new PDFParse({data: archivo.buffer});
+      const pdfData = await parser.getText(); // Extraer el texto del PDF
+      textoPDF = pdfData.text;
+    } catch {
+      throw new BadRequestException('No se pudo leer el PDF. Verificá que el archivo no esté dañado o protegido.');
+    }
+
+    if (!textoPDF?.trim()) {
+      throw new BadRequestException('El PDF no contiene texto legible.');
+    }
 
     // 2. Prompt distinto según el plan
-    const prompt = usuario.plan === 'pro'
+    const prompt = plan === 'pro'
       ? `Analizá este CV en profundidad y devolvé en español:
          1. Puntuación general del 1 al 100
          2. Puntos fuertes (detallado)
@@ -65,12 +75,16 @@ export class AnalisisService {
          ${textoPDF}`;
 
     // 3. Enviar a Gemini
-    const response = await this.genAI.models.generateContent({
-      model: 'gemini-3.6-flash',
-      contents: prompt,
-    });
-
-    const resultado = response.text ?? '';
+    let resultado: string;
+    try {
+      const response = await this.genAI.models.generateContent({
+        model: 'gemini-3.6-flash',
+        contents: prompt,
+      });
+      resultado = response.text ?? '';
+    } catch {
+      throw new ServiceUnavailableException('El servicio de análisis no está disponible en este momento. Intentá de nuevo más tarde.');
+    }
 
     // 4. Guardar resultado
     const analisis = this.analisisRepository.create({ usuario, resultado });

@@ -12,19 +12,20 @@ export class UsuariosService {
   ) {}
 
   async crear(email: string, password: string): Promise<Usuario>{
-    const existe = await this.usuariosRepository.findOne({ where: { email } });
+    const emailNormalizado = email.toLowerCase().trim();
+    const existe = await this.usuariosRepository.findOne({ where: { email: emailNormalizado } });
 
     if(existe) throw new ConflictException('El email ya está registrado');
 
     const password_hash = await bcrypt.hash(password, 10);
-    const usuario = this.usuariosRepository.create({ email, password_hash });
-    
+    const usuario = this.usuariosRepository.create({ email: emailNormalizado, password_hash });
+
     return this.usuariosRepository.save(usuario);
   }
 
   async buscar_por_email(email: string): Promise<Usuario | null>{
-    return this.usuariosRepository.findOne({ where: { email } })
-  } 
+    return this.usuariosRepository.findOne({ where: { email: email.toLowerCase().trim() } })
+  }
 
   async buscar_por_id(id: string): Promise<Usuario | null>{
     return this.usuariosRepository.findOne({ where: { id } });

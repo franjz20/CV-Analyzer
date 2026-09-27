@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '../../lib/api';
+import api, { mensajeError } from '@/lib/api';
 
 export default function PricingPage(){
   const [cargando, setCargando] = useState(false);
@@ -23,7 +23,7 @@ export default function PricingPage(){
       const res = await api.post('/pagos/crear-sesion');
       window.location.href = res.data.url;
     } catch (err: any) {
-        setError(err.response?.data?.message || 'Error al iniciar de pago');
+        setError(mensajeError(err, 'Error al iniciar el pago'));
         setCargando(false);
     }
   };
