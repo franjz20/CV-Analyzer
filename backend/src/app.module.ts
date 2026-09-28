@@ -27,6 +27,8 @@ import { PagosModule } from './pagos/pagos.module';
         ssl: { rejectUnauthorized: false },
         autoLoadEntities: true,
         synchronize: false,
+        retryAttempts: 5,
+        retryDelay: 3000,
       }),
       inject: [ConfigService],
     }),

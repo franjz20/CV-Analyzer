@@ -11,16 +11,22 @@ import { Usuario } from '../usuarios/usuario.entity';
 
 @Injectable()
 export class AnalisisService {
-  private genAI: GoogleGenAI;
+  private _genAI?: GoogleGenAI;
 
   constructor(
     @InjectRepository(Analisis)
     private analisisRepository: Repository<Analisis>,
     private configService: ConfigService,
-  ) {
-    this.genAI = new GoogleGenAI({
-      apiKey: this.configService.get<string>('GEMINI_API_KEY'),
-    });
+  ) {}
+
+  // Inicialización lazy: si falta la key solo falla el análisis, no el arranque
+  private get genAI(): GoogleGenAI {
+    if (!this._genAI) {
+      this._genAI = new GoogleGenAI({
+        apiKey: this.configService.get<string>('GEMINI_API_KEY'),
+      });
+    }
+    return this._genAI;
   }
 
   async contarAnalisisDelUsuario(usuarioId: string): Promise<number> {

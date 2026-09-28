@@ -3,6 +3,13 @@ import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  // Aviso temprano en logs si faltan variables críticas
+  const requeridas = ['DATABASE_HOST', 'DATABASE_PORT', 'DATABASE_USER', 'DATABASE_PASSWORD', 'DATABASE_NAME', 'JWT_SECRET'];
+  const faltantes = requeridas.filter((v) => !process.env[v]);
+  if (faltantes.length) {
+    console.error(`Faltan variables de entorno: ${faltantes.join(', ')}`);
+  }
+
   const app = await NestFactory.create(AppModule, {rawBody: true});
 
   app.useGlobalPipes(

@@ -7,13 +7,19 @@ import { UsuariosService } from '../usuarios/usuarios.service';
 
 @Injectable()
 export class PagosService {
-  private stripe: Stripe;
+  private _stripe?: Stripe;
 
   constructor(
     private configService: ConfigService,
-    private usuarioService: UsuariosService,    
-  ) {
-    this.stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY')!);
+    private usuarioService: UsuariosService,
+  ) {}
+
+  // Inicialización lazy: si falta la key solo falla /pagos, no todo el server
+  private get stripe(): Stripe {
+    if (!this._stripe) {
+      this._stripe = new Stripe(this.configService.get<string>('STRIPE_SECRET_KEY')!);
+    }
+    return this._stripe;
   }
 
   async crearSesionPago(usuarioId: string, email: string) {
