@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api, { mensajeError } from '@/lib/api';
 import { esEmailValido } from '@/lib/validaciones';
+import Logo from '@/components/logo';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -40,12 +41,13 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <form onSubmit={handleSubmit} noValidate className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <Link href="/" className="text-sm font-medium text-indigo-600 hover:text-indigo-700">
-          ← Volver al inicio
-        </Link>
-        <h1 className="mt-4 mb-6 text-2xl font-bold">Iniciar sesión</h1>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4">
+      <div className="pointer-events-none absolute -top-32 right-0 h-80 w-80 rounded-full bg-indigo-100 blur-3xl opacity-60" />
+      <div className="pointer-events-none absolute -bottom-32 left-0 h-80 w-80 rounded-full bg-sky-100 blur-3xl opacity-60" />
+      <form onSubmit={handleSubmit} noValidate className="relative w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+        <Logo />
+        <h1 className="mt-6 mb-1 text-2xl font-bold">Iniciar sesión</h1>
+        <p className="mb-6 text-sm text-slate-500">Ingresá para analizar tu CV</p>
 
         {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 

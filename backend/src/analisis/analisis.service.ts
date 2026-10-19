@@ -1,33 +1,19 @@
-import { Injectable, ForbiddenException, BadRequestException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ConfigService } from '@nestjs/config';
-import { GoogleGenAI } from '@google/genai';
-// import * as pdfParse from 'pdf-parse';
 import { PDFParse } from 'pdf-parse';
 
 import { Analisis } from './analisis.entity';
 import { Usuario } from '../usuarios/usuario.entity';
+import { IaService, ResultadoAnalisis } from './ia.service';
 
 @Injectable()
 export class AnalisisService {
-  private _genAI?: GoogleGenAI;
-
   constructor(
     @InjectRepository(Analisis)
     private analisisRepository: Repository<Analisis>,
-    private configService: ConfigService,
+    private iaService: IaService,
   ) {}
-
-  // Inicialización lazy: si falta la key solo falla el análisis, no el arranque
-  private get genAI(): GoogleGenAI {
-    if (!this._genAI) {
-      this._genAI = new GoogleGenAI({
-        apiKey: this.configService.get<string>('GEMINI_API_KEY'),
-      });
-    }
-    return this._genAI;
-  }
 
   async contarAnalisisDelUsuario(usuarioId: string): Promise<number> {
     return this.analisisRepository.count({
@@ -35,7 +21,7 @@ export class AnalisisService {
     });
   }
 
-  async analizarCV(archivo: Express.Multer.File, usuario: Usuario): Promise<Analisis> {
+  async analizarCV(archivo: Express.Multer.File, usuario: Usuario) {
     const LIMITE_GRATIS = 3;
     const plan = usuario.plan?.trim();
 
@@ -64,36 +50,65 @@ export class AnalisisService {
 
     // 2. Prompt distinto según el plan
     const prompt = plan === 'pro'
-      ? `Analizá este CV en profundidad y devolvé en español:
-         1. Puntuación general del 1 al 100
-         2. Puntos fuertes (detallado)
-         3. Puntos a mejorar (detallado)
-         4. Sugerencias concretas por sección
-         5. Una versión reescrita del "Sobre mí" o resumen profesional
-         
-         CV:
-         ${textoPDF}`
-      : `Analizá este CV de forma breve y devolvé en español:
-         1. Puntuación general del 1 al 100
-         2. Un resumen corto de 3-4 líneas con lo más importante a mejorar
-         
-         CV:
-         ${textoPDF}`;
+      ? this.promptPro(textoPDF)
+      : this.promptGratis(textoPDF);
 
-    // 3. Enviar a Gemini
-    let resultado: string;
-    try {
-      const response = await this.genAI.models.generateContent({
-        model: 'gemini-3.6-flash',
-        contents: prompt,
-      });
-      resultado = response.text ?? '';
-    } catch {
-      throw new ServiceUnavailableException('El servicio de análisis no está disponible en este momento. Intentá de nuevo más tarde.');
-    }
+    // 3. Enviar a la IA (Gemini, con Groq de respaldo si falla)
+    const resultado = await this.iaService.generar(prompt);
 
-    // 4. Guardar resultado
-    const analisis = this.analisisRepository.create({ usuario, resultado });
-    return this.analisisRepository.save(analisis);
+    // 4. Guardar resultado (como JSON) y devolverlo parseado
+    const analisis = this.analisisRepository.create({
+      usuario,
+      resultado: JSON.stringify(resultado),
+    });
+    const guardado = await this.analisisRepository.save(analisis);
+
+    return { ...guardado, resultado };
+  }
+
+  private promptGratis(textoCV: string): string {
+    return `Sos un experto en reclutamiento y redacción de currículums. Analizá el siguiente CV y devolvé ÚNICAMENTE un JSON válido (sin markdown, sin texto extra) con esta estructura exacta:
+
+{
+  "puntuacion": <número del 1 al 100 según qué tan competitivo está el CV>,
+  "resumenGeneral": "<evaluación breve de 2-3 oraciones con lo más importante>",
+  "mejoras": [
+    {"seccion": "<sección del CV>", "problema": "<qué está mal>", "sugerencia": "<cómo mejorarlo>"}
+  ]
+}
+
+Reglas:
+- Respondé en español
+- Incluí exactamente 3 mejoras: las de mayor impacto
+- Sé específico: mencioná secciones y contenido real del CV
+
+CV:
+${textoCV}`;
+  }
+
+  private promptPro(textoCV: string): string {
+    return `Sos un experto en reclutamiento y redacción de currículums. Analizá el siguiente CV en profundidad y devolvé ÚNICAMENTE un JSON válido (sin markdown, sin texto extra) con esta estructura exacta:
+
+{
+  "puntuacion": <número del 1 al 100 según qué tan competitivo está el CV>,
+  "resumenGeneral": "<evaluación breve de 2-3 oraciones>",
+  "puntosFuertes": ["<punto fuerte concreto del CV>", ...],
+  "mejoras": [
+    {"seccion": "<sección del CV>", "problema": "<qué está mal>", "sugerencia": "<cómo mejorarlo concreto>"}
+  ],
+  "agregar": ["<elemento concreto que falta y conviene sumar>", ...],
+  "eliminar": ["<elemento que resta valor y conviene quitar>", ...],
+  "resumenReescrito": "<versión mejorada del resumen profesional o 'Sobre mí'>"
+}
+
+Reglas:
+- Respondé en español
+- Sé específico: mencioná secciones y contenido real del CV, nada genérico
+- Priorizá las mejoras de mayor impacto para conseguir entrevistas
+- En "agregar" pensá en palabras clave, métricas y secciones que los filtros ATS buscan
+- Si el CV no tiene resumen profesional, escribí uno sugerido en "resumenReescrito"
+
+CV:
+${textoCV}`;
   }
 }

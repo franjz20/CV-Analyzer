@@ -3,6 +3,23 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import api, { mensajeError } from '@/lib/api';
+import Logo from '@/components/logo';
+
+function Check() {
+  return (
+    <svg className="h-4 w-4 shrink-0 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  );
+}
+
+function Cruz() {
+  return (
+    <svg className="h-4 w-4 shrink-0 text-slate-300" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  );
+}
 
 export default function PricingPage(){
   const [cargando, setCargando] = useState(false);
@@ -29,53 +46,70 @@ export default function PricingPage(){
   };
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-8">
-      <div className="max-w-4xl w-full grid md:grid-cols-2 gap-6">
-        
-        {/* Plan Gratis */}
-        <div className="bg-white p-8 rounded-lg shadow border">
-          <h2 className="text-xl font-bold mb-2">Gratis</h2>
-          <p className="text-3xl font-bold mb-4">$0</p>
-          <ul className="space-y-2 text-sm text-gray-600 mb-6">
-            <li>✅ Hasta 3 análisis</li>
-            <li>✅ Puntuación general</li>
-            <li>✅ Resumen breve</li>
-            <li>❌ Sugerencias detalladas</li>
-            <li>❌ Análisis ilimitados</li>
-          </ul>
-          <button
-            disabled
-            className="w-full bg-gray-200 text-gray-500 py-2 rounded cursor-not-allowed"
-          >
-            Plan actual
-          </button>
+    <div className="min-h-screen bg-slate-50">
+      <header className="border-b border-slate-200 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
+          <Logo />
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-4xl px-6 py-14">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Planes simples y transparentes</h1>
+          <p className="mt-3 text-slate-600">Empezá gratis y actualizá cuando necesites análisis ilimitados.</p>
         </div>
 
-        {/* Plan Pro */}
-        <div className="bg-white p-8 rounded-lg shadow border-2 border-blue-600">
-          <h2 className="text-xl font-bold mb-2">Pro</h2>
-          <p className="text-3xl font-bold mb-4">$5<span className="text-sm font-normal">/mes</span></p>
-          <ul className="space-y-2 text-sm text-gray-600 mb-6">
-            <li>✅ Análisis ilimitados</li>
-            <li>✅ Puntuación general</li>
-            <li>✅ Sugerencias detalladas</li>
-            <li>✅ Reescritura del resumen profesional</li>
-          </ul>
+        <div className="mt-10 grid gap-6 md:grid-cols-2">
+          {/* Plan Gratis */}
+          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+            <h2 className="text-lg font-bold text-slate-900">Gratis</h2>
+            <p className="mt-1 text-sm text-slate-500">Para probar el servicio</p>
+            <p className="mt-4 text-4xl font-extrabold text-slate-900">$0</p>
+            <ul className="mt-6 space-y-3 text-sm text-slate-600">
+              <li className="flex items-center gap-2.5"><Check /> Hasta 3 análisis</li>
+              <li className="flex items-center gap-2.5"><Check /> Puntuación general</li>
+              <li className="flex items-center gap-2.5"><Check /> Top 3 mejoras de mayor impacto</li>
+              <li className="flex items-center gap-2.5 text-slate-400"><Cruz /> Análisis ilimitados</li>
+              <li className="flex items-center gap-2.5 text-slate-400"><Cruz /> Sugerencias detalladas y reescritura</li>
+            </ul>
+            <button
+              disabled
+              className="mt-8 w-full cursor-not-allowed rounded-lg bg-slate-100 py-2.5 font-semibold text-slate-400"
+            >
+              Plan actual
+            </button>
+          </div>
 
-          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
+          {/* Plan Pro */}
+          <div className="relative rounded-xl border-2 border-indigo-600 bg-white p-8 shadow-md">
+            <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-indigo-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+              Recomendado
+            </span>
+            <h2 className="text-lg font-bold text-slate-900">Pro</h2>
+            <p className="mt-1 text-sm text-slate-500">Para buscar trabajo en serio</p>
+            <p className="mt-4 text-4xl font-extrabold text-slate-900">
+              $5<span className="text-base font-medium text-slate-500">/mes</span>
+            </p>
+            <ul className="mt-6 space-y-3 text-sm text-slate-600">
+              <li className="flex items-center gap-2.5"><Check /> Análisis ilimitados</li>
+              <li className="flex items-center gap-2.5"><Check /> Puntuación general</li>
+              <li className="flex items-center gap-2.5"><Check /> Puntos fuertes y mejoras detalladas</li>
+              <li className="flex items-center gap-2.5"><Check /> Qué agregar y qué eliminar</li>
+              <li className="flex items-center gap-2.5"><Check /> Reescritura del resumen profesional</li>
+            </ul>
 
-          <button
-            onClick={handlePago}
-            disabled={cargando}
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
-          >
-            {cargando ? 'Redirigiendo...' : 'Actualizar a Pro'}
-          </button>
+            {error && <p className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+
+            <button
+              onClick={handlePago}
+              disabled={cargando}
+              className="mt-8 w-full rounded-lg bg-indigo-600 py-2.5 font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+            >
+              {cargando ? 'Redirigiendo...' : 'Actualizar a Pro'}
+            </button>
+          </div>
         </div>
-
-       </div>
       </div>
-    </>
+    </div>
   );
 }

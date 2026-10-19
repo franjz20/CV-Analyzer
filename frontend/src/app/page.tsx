@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { AuthNav, CtaLink } from '@/components/auth-cta';
+import Logo from '@/components/logo';
 
 const caracteristicas = [
   {
@@ -43,14 +44,7 @@ export default function Home() {
       {/* Navbar */}
       <header className="sticky top-0 z-10 border-b border-slate-200 bg-white/80 backdrop-blur">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2 text-lg font-bold">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </span>
-            CV Analyzer
-          </Link>
+          <Logo />
           <div className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
             <a href="#caracteristicas" className="hover:text-slate-900 transition-colors">Características</a>
             <a href="#como-funciona" className="hover:text-slate-900 transition-colors">Cómo funciona</a>
