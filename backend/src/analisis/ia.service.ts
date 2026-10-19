@@ -34,21 +34,22 @@ export class IaService {
     return this._genAI;
   }
 
-  // Intenta Gemini primero; si falla (saturado, caído, etc.) usa Groq de respaldo
+  // Intenta Gemini primero (con reintento); si falla usa Groq de respaldo
   async generar(prompt: string): Promise<ResultadoAnalisis> {
     const errores: string[] = [];
 
     if (this.configService.get('GEMINI_API_KEY')) {
       try {
-        return await this.conGemini(prompt);
+        return await this.conReintento(() => this.conGemini(prompt));
       } catch (e: any) {
         errores.push(`Gemini: ${e?.message ?? e}`);
+        console.error('Gemini falló, probando respaldo:', e?.message ?? e);
       }
     }
 
     if (this.configService.get('GROQ_API_KEY')) {
       try {
-        return await this.conGroq(prompt);
+        return await this.conReintento(() => this.conGroq(prompt));
       } catch (e: any) {
         errores.push(`Groq: ${e?.message ?? e}`);
       }
@@ -60,9 +61,19 @@ export class IaService {
     );
   }
 
+  // Un reintento extra por si el proveedor está saturado momentáneamente
+  private async conReintento(fn: () => Promise<ResultadoAnalisis>): Promise<ResultadoAnalisis> {
+    try {
+      return await fn();
+    } catch {
+      await new Promise((r) => setTimeout(r, 1500));
+      return fn();
+    }
+  }
+
   private async conGemini(prompt: string): Promise<ResultadoAnalisis> {
     const response = await this.genAI.models.generateContent({
-      model: this.configService.get('GEMINI_MODEL') || 'gemini-2.5-flash',
+      model: this.configService.get('GEMINI_MODEL') || 'gemini-3.6-flash',
       contents: prompt,
       config: { responseMimeType: 'application/json' },
     });
@@ -78,7 +89,7 @@ export class IaService {
         Authorization: `Bearer ${this.configService.get<string>('GROQ_API_KEY')}`,
       },
       body: JSON.stringify({
-        model: this.configService.get('GROQ_MODEL') || 'llama-3.3-70b-versatile',
+        model: this.configService.get('GROQ_MODEL') || 'openai/gpt-oss-120b',
         messages: [{ role: 'user', content: prompt }],
         response_format: { type: 'json_object' },
         temperature: 0.4,
@@ -95,9 +106,17 @@ export class IaService {
   }
 
   private parsearJson(texto: string): ResultadoAnalisis {
-    // Por si el modelo envuelve el JSON en ```json ... ```
+    // Por si el modelo envuelve el JSON en ```json ... ``` o agrega texto extra
     const limpio = texto.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(limpio);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(limpio);
+    } catch {
+      const ini = limpio.indexOf('{');
+      const fin = limpio.lastIndexOf('}');
+      if (ini === -1 || fin <= ini) throw new Error('La respuesta de la IA no es JSON');
+      parsed = JSON.parse(limpio.slice(ini, fin + 1));
+    }
 
     if (typeof parsed?.puntuacion !== 'number') {
       throw new Error('La respuesta de la IA no tiene el formato esperado');
